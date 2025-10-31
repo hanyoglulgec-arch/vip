@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="tk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kalkulýator — Türkmençe</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1724;
+      --muted:#9aa4b2;
+      --accent:#10b981;
+      --op:#f59e0b;
+      --danger:#ef4444;
+      --white:#ffffff;
+      --radius:12px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#041226 0%,#081028 100%);color:var(--white)}
+    .wrap{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+    }
+    .calc {
+      width:360px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 10px 30px rgba(2,6,23,0.6);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    header {display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    header h1{font-size:18px;margin:0}
+    header p{margin:0;color:var(--muted);font-size:12px}
+    .display {
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.05));
+      border-radius:12px;
+      padding:14px;
+      font-size:32px;
+      text-align:right;
+      min-height:56px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      overflow:hidden;
+      color:var(--white);
+      margin-bottom:12px;
+      word-break:break-all;
+    }
+    .sub-display{font-size:12px;color:var(--muted);text-align:right;margin-top:6px;min-height:16px}
+    .keys{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+    }
+    button.key{
+      padding:16px;
+      font-size:18px;
+      border-radius:10px;
+      border:none;
+      background:rgba(255,255,255,0.03);
+      color:var(--white);
+      cursor:pointer;
+      box-shadow:0 6px 14px rgba(2,6,23,0.35);
+      user-select:none;
+    }
+    button.key:active{transform:translateY(1px)}
+    .key.op{background:rgba(255,255,255,0.06)}
+    .key.eq{background:linear-gradient(180deg,var(--accent),#059669);font-weight:700}
+    .key.ac{background:rgba(239,68,68,0.12);color:#ffdede}
+    .key.zero{grid-column:1 / span 2;text-align:left;padding-left:22px}
+    .controls{display:flex;gap:8px;align-items:center;margin-top:12px}
+    .history {
+      margin-left:12px;
+      background:rgba(255,255,255,0.02);
+      padding:10px;border-radius:10px;max-height:180px;overflow:auto;font-size:13px;color:var(--muted)
+    }
+    .history h3{margin:0 0 6px 0;font-size:13px;color:var(--white)}
+    .hist-row{display:flex;justify-content:space-between;margin-bottom:6px}
+    .small{font-size:12px;color:var(--muted)}
+    .footer{margin-top:12px;text-align:center;color:var(--muted);font-size:12px}
+    @media (max-width:420px){
+      .calc{width:320px;padding:14px}
+      .display{font-size:26px;padding:10px}
+      button.key{padding:12px;font-size:16px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="calc" role="application" aria-label="Kalkulýator">
+      <header>
+        <div>
+          <h1>Kalkulýator</h1>
+          <p class="small">Türkmençe — ýönekeý we howpsuz</p>
+        </div>
+        <div class="controls">
+          <button class="key" id="toggleHistory" title="Taryhy görkez/ýaýrat">Taryh</button>
+        </div>
+      </header>
+
+      <div class="display" id="display" aria-live="polite">0</div>
+      <div class="sub-display" id="subDisplay"></div>
+
+      <div class="keys" id="keys">
+        <button class="key ac" data-action="clear">AC</button>
+        <button class="key" data-action="back">⌫</button>
+        <button class="key" data-action="percent">%</button>
+        <button class="key op" data-action="operator" data-value="/">÷</button>
+
+        <button class="key" data-number="7">7</button>
+        <button class="key" data-number="8">8</button>
+        <button class="key" data-number="9">9</button>
+        <button class="key op" data-action="operator" data-value="*">×</button>
+
+        <button class="key" data-number="4">4</button>
+        <button class="key" data-number="5">5</button>
+        <button class="key" data-number="6">6</button>
+        <button class="key op" data-action="operator" data-value="-">−</button>
+
+        <button class="key" data-number="1">1</button>
+        <button class="key" data-number="2">2</button>
+        <button class="key" data-number="3">3</button>
+        <button class="key op" data-action="operator" data-value="+">+</button>
+
+        <button class="key zero" data-number="0">0</button>
+        <button class="key" data-number=".">.</button>
+        <button class="key eq" data-action="equals">=</button>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:12px;align-items:flex-start">
+        <div style="flex:1">
+          <div class="small" style="margin-bottom:6px">Aýdym</div>
+          <div class="small">AC — arassala, ⌫ — bir simwoly poz, % — faýza, +/- üçin klawiaturada +/- ulanyp bilersiňiz.</div>
+        </div>
+
+        <div class="history" id="history" style="display:none">
+          <h3>Taryh</h3>
+          <div id="historyList"></div>
+        </div>
+      </div>
+
+      <div class="footer">Kody özleşdirip bilersiňiz — gerek bolsa kömek ederin</div>
+    </div>
+  </div>
+
+  <script>
+    // Türkmençe komment: ýönekeý we howpsuz kalkulýator logikasy
+    (function(){
+      const display = document.getElementById('display');
+      const subDisplay = document.getElementById('subDisplay');
+      const keys = document.getElementById('keys');
+      const historyEl = document.getElementById('history');
+      const historyList = document.getElementById('historyList');
+      const toggleHistoryBtn = document.getElementById('toggleHistory');
+
+      let current = '0';
+      let previous = null;
+      let operator = null;
+      let resetNext = false;
+      let history = [];
+
+      function updateDisplay(){
+        display.textContent = current;
+        subDisplay.textContent = operator ? `${previous || ''} ${operator}` : '';
+      }
+
+      function inputNumber(n){
+        if (resetNext) {
+          current = (n === '.') ? '0.' : n;
+          resetNext = false;
+          updateDisplay();
+          return;
+        }
+        if (n === '.' && current.includes('.')) return;
+        current = (current === '0' && n !== '.') ? n : current + n;
+        updateDisplay();
+      }
+
+      function clearAll(){
+        current = '0';
+        previous = null;
+        operator = null;
+        resetNext = false;
+        updateDisplay();
+      }
+
+      function backspace(){
+        if (resetNext) { current = '0'; resetNext = false; updateDisplay(); return; }
+        current = current.length <= 1 ? '0' : current.slice(0,-1);
+        updateDisplay();
+      }
+
+      function toggleNeg(){
+        if (current === '0') return;
+        current = current.startsWith('-') ? current.slice(1) : '-' + current;
+        updateDisplay();
+      }
+
+      function percent(){
+        const val = parseFloat(current);
+        if (isNaN(val)) return;
+        current = String(val / 100);
+        updateDisplay();
+      }
+
+      function chooseOperator(op){
+        if (operator && !resetNext){
+          compute();
+        }
+        previous = current;
+        operator = op;
+        resetNext = true;
+        updateDisplay();
+      }
+
+      function compute(){
+        if (!operator || previous === null) return;
+        const a = parseFloat(previous);
+        const b = parseFloat(current);
+        if (isNaN(a) || isNaN(b)) return;
+        let result;
+        switch(operator){
+          case '+': result = a + b; break;
+          case '-': result = a - b; break;
+          case '*': result = a * b; break;
+          case '/':
+            if (b === 0) { result = 'Ýalňyşlyk'; break; }
+            result = a / b; break;
+          default: return;
+        }
+        // sikdirmek we aşa uzyn sanlary gysmak
+        if (typeof result === 'number'){
+          // ±12 san -> 12 desimal
+          result = parseFloat(result.toFixed(12));
+          // örän uly ýa-da kiçi bolanda bilimli format
+          if (!isFinite(result)) result = 'Ýalňyşlyk';
+        }
+        addHistory(`${previous} ${operator} ${current} = ${result}`);
+        current = String(result);
+        operator = null;
+        previous = null;
+        resetNext = true;
+        updateDisplay();
+      }
+
+      function addHistory(entry){
+        history.unshift({t: new Date(), text: entry});
+        if (history.length > 30) history.pop();
+        renderHistory();
+      }
+
+      function renderHistory(){
+        historyList.innerHTML = '';
+        if (history.length === 0){
+          historyList.innerHTML = '<div class="small">Taryh ýönekeý — hiç zat ýok</div>';
+          return;
+        }
+        history.forEach(h => {
+          const row = document.createElement('div');
+          row.className = 'hist-row';
+          const left = document.createElement('div');
+          left.textContent = h.text;
+          left.style.flex = '1';
+          left.style.marginRight = '8px';
+          left.style.fontSize = '13px';
+          const right = document.createElement('div');
+          right.textContent = h.t.toLocaleTimeString();
+          right.className = 'small';
+          row.appendChild(left);
+          row.appendChild(right);
+          historyList.appendChild(row);
+        });
+      }
+
+      // düwmeler bilen dolandyrmak
+      keys.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        if (btn.dataset.number !== undefined){
+          inputNumber(btn.dataset.number);
+          return;
+        }
+        const action = btn.dataset.action;
+        if (!action && btn.dataset.value){
+          chooseOperator(btn.dataset.value);
+          return;
+        }
+        switch(action){
+          case 'clear': clearAll(); break;
+          case 'back': backspace(); break;
+          case 'percent': percent(); break;
+          case 'operator': chooseOperator(btn.dataset.value); break;
+          case 'equals': compute(); break;
+        }
+      });
+
+      // klawiatura bilen işlemek
+      document.addEventListener('keydown', (e) => {
+        if ((/\d/).test(e.key)) { inputNumber(e.key); return; }
+        if (e.key === '.' || e.key === ',') { inputNumber('.'); return; }
+        if (e.key === 'Backspace') { backspace(); return; }
+        if (e.key === 'Escape') { clearAll(); return; }
+        if (e.key === 'Enter' || e.key === '=') { compute(); e.preventDefault(); return; }
+        if (e.key === '%') { percent(); return; }
+        if (e.key === '+') { chooseOperator('+'); return; }
+        if (e.key === '-') { chooseOperator('-'); return; }
+        if (e.key === '*') { chooseOperator('*'); return; }
+        if (e.key === '/') { chooseOperator('/'); return; }
+        // +/- uchun: shift + nutton yoki 'n' ulanyp bolmaýar, şonuň üçin belgiläok
+      });
+
+      // taryhy görkezmek / gizlemek
+      toggleHistoryBtn.addEventListener('click', () => {
+        if (historyEl.style.display === 'none' || historyEl.style.display === '') {
+          historyEl.style.display = 'block';
+          toggleHistoryBtn.textContent = 'Taryh (h)';
+        } else {
+          historyEl.style.display = 'none';
+          toggleHistoryBtn.textContent = 'Taryh';
+        }
+      });
+
+      // initsializasiya
+      updateDisplay();
+      renderHistory();
+
+      // ýene kiçi funksiýa: наружный +/- üçin (eger wagtyňda gerek bolsa)
+      window.toggleNeg = toggleNeg;
+    })();
+  </script>
+</body>
+  </html>
